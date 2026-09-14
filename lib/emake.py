@@ -3,7 +3,7 @@
 #  vim: set ts=4 sw=4 tw=0 et :
 #======================================================================
 #
-# emake.py - emake version 3.7.11
+# emake.py - emake version 3.7.12
 #
 # history of this file:
 # 2009.08.20   skywind   create this file
@@ -32,6 +32,7 @@
 # 2023.10.08   skywind   new: try "flag@debug: -g"
 # 2023.12.07   skywind   new: "PATH" item in 'default' section
 # 2024.05.06   skywind   new: "pkg: xxx" to import pkg-config packages
+# 2026.09.14   skywind   new: "src: @filelist" to import source list
 #
 #======================================================================
 from __future__ import unicode_literals, print_function
@@ -53,8 +54,8 @@ else:
 #----------------------------------------------------------------------
 # version info
 #----------------------------------------------------------------------
-EMAKE_VERSION = '3.7.11'
-EMAKE_DATE = 'Aug.27 2025'
+EMAKE_VERSION = '3.7.12'
+EMAKE_DATE = 'Sep.14 2026'
 
 #----------------------------------------------------------------------
 # constant value
@@ -2578,11 +2579,25 @@ class iparser (object):
             srcname = self.pathconf(name)
             if not srcname:
                 continue
-            if ('*' not in srcname) and ('?' not in srcname):
-                names = [ srcname ]
+            names = []
+            if srcname.startswith('@'):
+                srcname = srcname[1:].strip(' \r\n\t')
+                if (not srcname) or (not os.path.exists(srcname)):
+                    self.error('error: invalid file list name: %s' % srcname, 
+                               fname, lineno)
+                    return -2
+                dirname = os.path.dirname(os.path.abspath(srcname))
+                for line in posix.load_file_text(srcname).split('\n'):
+                    line = line.strip(' \r\n\t')
+                    if not line: continue
+                    if line[:1] in (';', '#'): continue
+                    absname = os.path.abspath(os.path.join(dirname, line))
+                    names.append(absname)
+            elif ('*' not in srcname) and ('?' not in srcname):
+                names.append(srcname)
             else:
                 import glob
-                names = glob.glob(srcname)
+                names.extend(glob.glob(srcname))
             for srcname in names:
                 absname = os.path.abspath(srcname)
                 self.pending_check.append((absname, srcname, fname, lineno))

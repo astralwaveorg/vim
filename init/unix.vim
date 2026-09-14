@@ -150,6 +150,7 @@ augroup AscUnixGroup
 	" au BufNewFile,BufRead *.md setlocal filetype=markdown
 	au BufNewFile,BufRead *.lua.rename setlocal filetype=lua
 	au BufNewFile,BufRead *.fmt setlocal filetype=protogen
+	au BufNewFile,BufRead *.h setlocal filetype=cpp
 augroup END
 
 
